@@ -1,0 +1,7 @@
+api/cache/*
+!api/cache/.gitkeep
+api/api.log
+api/current_data.json
+*.log
+.DS_Store
+Thumbs.db

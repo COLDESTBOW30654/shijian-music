@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>网易云音乐API调试面板</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #fff;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #ff6b6b, #feca57);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .config-panel {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .config-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .config-row label {
+            font-size: 14px;
+            color: #aaa;
+            min-width: 80px;
+        }
+
+        .config-row input {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            font-size: 14px;
+        }
+
+        .config-row input:focus {
+            outline: none;
+            border-color: #ff6b6b;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(90deg, #ff6b6b, #ee5a5a);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(255, 107, 107, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #666;
+        }
+
+        .status-dot.connected {
+            background: #4ade80;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.error {
+            background: #f87171;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .player-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .player-info {
+            display: flex;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .cover-container {
+            width: 180px;
+            height: 180px;
+            border-radius: 12px;
+            overflow: hidden;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .cover-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .cover-placeholder {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+        }
+
+        .song-details {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .song-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .song-artist {
+            font-size: 16px;
+            color: #aaa;
+            margin-bottom: 5px;
+        }
+
+        .song-album {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .progress-container {
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b, #feca57);
+            border-radius: 3px;
+            transition: width 0.3s;
+        }
+
+        .progress-time {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #888;
+        }
+
+        .lyrics-container {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .lyrics-container h3 {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 15px;
+        }
+
+        .lyrics-line {
+            font-size: 14px;
+            line-height: 1.8;
+            color: #ccc;
+            padding: 2px 0;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            border-radius: 8px;
+            color: #888;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: rgba(255, 107, 107, 0.2);
+            color: #ff6b6b;
+        }
+
+        .tab:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .response-panel {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .response-panel pre {
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            color: #a5d6ff;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .no-data-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .debug-info {
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            font-size: 12px;
+            color: #888;
+        }
+
+        .debug-info code {
+            color: #4ade80;
+        }
+
+        @media (max-width: 600px) {
+            .player-info {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+
+            .cover-container {
+                width: 150px;
+                height: 150px;
+            }
+
+            .config-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .config-row input {
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>网易云音乐API调试面板</h1>
+            <p style="color: #888;">实时查看播放器数据</p>
+        </div>
+
+        <div class="config-panel">
+            <div class="config-row">
+                <label>API地址:</label>
+                <input type="text" id="apiUrl" value="http://your-domain.com/music.php" placeholder="输入API地址">
+                <button class="btn btn-primary" onclick="fetchData()">获取数据</button>
+                <button class="btn btn-secondary" onclick="toggleAutoRefresh()">自动刷新</button>
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-indicator">
+                <span class="status-dot" id="statusDot"></span>
+                <span id="statusText">未连接</span>
+            </div>
+            <div>
+                <span>响应时间: <span id="responseTime">-</span></span>
+                <span style="margin-left: 20px;">更新时间: <span id="updateTime">-</span></span>
+                <span style="margin-left: 20px;">数据时间: <span id="dataTime">-</span></span>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('player')">播放器</button>
+            <button class="tab" onclick="switchTab('raw')">原始数据</button>
+        </div>
+
+        <div id="playerTab">
+            <div class="player-card" id="playerCard">
+                <div class="no-data">
+                    <div class="no-data-icon">🎵</div>
+                    <p>暂无播放数据</p>
+                    <p style="font-size: 12px; margin-top: 10px;">请确保API地址正确且插件正在运行</p>
+                </div>
+            </div>
+
+            <div class="lyrics-container" id="lyricsContainer" style="display: none;">
+                <h3>歌词</h3>
+                <div id="lyricsContent"></div>
+            </div>
+            
+            <div class="debug-info">
+                <p>调试信息:</p>
+                <p>- 插件需要配置API地址为: <code>http://your-domain.com/music.php</code></p>
+                <p>- 确保网易云音乐客户端正在播放歌曲</p>
+                <p>- 按F12打开控制台查看详细日志</p>
+            </div>
+        </div>
+
+        <div id="rawTab" style="display: none;">
+            <div class="response-panel">
+                <pre id="rawData">暂无数据</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let autoRefreshInterval = null;
+        let currentTab = 'player';
+        let lastData = null;
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            document.getElementById('playerTab').style.display = tab === 'player' ? 'block' : 'none';
+            document.getElementById('rawTab').style.display = tab === 'raw' ? 'block' : 'none';
+        }
+
+        async function fetchData() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+
+            try {
+                const startTime = performance.now();
+                const response = await fetch(apiUrl + '?action=current', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                const endTime = performance.now();
+                
+                const data = await response.json();
+                lastData = data;
+
+                statusDot.className = 'status-dot connected';
+                statusText.textContent = '已连接';
+                document.getElementById('responseTime').textContent = data.response_time_ms + 'ms';
+                document.getElementById('updateTime').textContent = new Date().toLocaleTimeString();
+                
+                if (data.data && data.data.timestamp) {
+                    const dataDate = new Date(data.data.timestamp);
+                    document.getElementById('dataTime').textContent = dataDate.toLocaleString();
+                    
+                    const secondsAgo = Math.floor((Date.now() - data.data.timestamp) / 1000);
+                    if (secondsAgo > 30) {
+                        statusText.textContent = '已连接 (数据过期)';
+                        statusDot.className = 'status-dot error';
+                    }
+                }
+
+                updatePlayerUI(data);
+                updateRawData(data);
+
+            } catch (error) {
+                statusDot.className = 'status-dot error';
+                statusText.textContent = '连接失败';
+                document.getElementById('responseTime').textContent = '-';
+                console.error('请求失败:', error);
+            }
+        }
+
+        function updatePlayerUI(data) {
+            const playerCard = document.getElementById('playerCard');
+            const playing = data.data?.playing;
+
+            if (!playing || data.data?.status === 'error') {
+                playerCard.innerHTML = `
+                    <div class="no-data">
+                        <div class="no-data-icon">⚠️</div>
+                        <p>${data.data?.message || '暂无播放数据'}</p>
+                    </div>
+                `;
+                document.getElementById('lyricsContainer').style.display = 'none';
+                return;
+            }
+
+            const song = playing.song || {};
+            const progress = playing.progress || {};
+            const lyrics = playing.lyrics || {};
+
+            playerCard.innerHTML = `
+                <div class="player-info">
+                    <div class="cover-container">
+                        ${song.album?.cover 
+                            ? `<img src="${song.album.cover}" alt="封面" onerror="this.parentElement.innerHTML='<div class=\\'cover-placeholder\\'>🎵</div>'">` 
+                            : '<div class="cover-placeholder">🎵</div>'}
+                    </div>
+                    <div class="song-details">
+                        <div class="song-title">${song.name || '未知歌曲'}</div>
+                        <div class="song-artist">${(song.artists || []).join(' / ') || '未知歌手'}</div>
+                        <div class="song-album">专辑: ${song.album?.name || '未知专辑'}</div>
+                        <div style="margin-top: 15px; font-size: 12px; color: #666;">
+                            歌曲ID: ${song.id || '-'}
+                        </div>
+                    </div>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${progress.percent || 0}%"></div>
+                    </div>
+                    <div class="progress-time">
+                        <span>${progress.formattedCurrentTime || '00:00'}</span>
+                        <span>${progress.formattedDuration || '00:00'}</span>
+                    </div>
+                </div>
+            `;
+
+            const lyricsContainer = document.getElementById('lyricsContainer');
+            if (lyrics.available && lyrics.parsed?.length > 0) {
+                lyricsContainer.style.display = 'block';
+                const lyricsContent = document.getElementById('lyricsContent');
+                lyricsContent.innerHTML = lyrics.parsed.map(line => 
+                    `<div class="lyrics-line">${line.text}</div>`
+                ).join('');
+            } else {
+                lyricsContainer.style.display = 'none';
+            }
+        }
+
+        function updateRawData(data) {
+            document.getElementById('rawData').textContent = JSON.stringify(data, null, 2);
+        }
+
+        function toggleAutoRefresh() {
+            const btn = event.target;
+            
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+                btn.textContent = '自动刷新';
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-secondary');
+            } else {
+                autoRefreshInterval = setInterval(fetchData, 2000);
+                btn.textContent = '停止刷新';
+                btn.classList.remove('btn-secondary');
+                btn.classList.add('btn-primary');
+                fetchData();
+            }
+        }
+
+        document.getElementById('apiUrl').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                fetchData();
+            }
+        });
+
+        fetchData();
+    </script>
+</body>
+</html>
