@@ -133,6 +133,10 @@ Content-Type: application/json
 2. 按 F12 查看控制台日志
 3. 检查 BetterNCM API 是否正常返回数据
 
+## 温馨提醒
+
+### 本项目使用AI进行开发
+
 ## 许可证
 
 MIT License
