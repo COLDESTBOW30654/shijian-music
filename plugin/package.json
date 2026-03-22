@@ -1,6 +1,6 @@
 {
   "name": "视奸我-网易云插件",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "将网易云音乐播放信息自动通过api上传至网络",
   "main": "index.js",
   "license": "MIT",

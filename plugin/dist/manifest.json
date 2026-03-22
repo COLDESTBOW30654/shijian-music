@@ -2,7 +2,7 @@
     "manifest_version": 1,
     "name": "视奸我-网易云插件", 
     "slug": "shijianwo-music",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "author": "hengduan", 
     "description": "将网易云音乐播放信息自动通过API上传至网络",
     "betterncm_version": ">=0.2.5",

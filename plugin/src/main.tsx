@@ -44,6 +44,7 @@ interface PlayerData {
 const MusicDataExporter = {
     config: {
         apiEndpoint: 'http://your-domain.com/music.php',
+        apiToken: 'your-secret-token',
         updateInterval: 1000,
         enableLog: true
     },
@@ -65,6 +66,7 @@ const MusicDataExporter = {
     loadConfig() {
         if (!this.plugin) return;
         this.config.apiEndpoint = this.plugin.getConfig('apiEndpoint', this.config.apiEndpoint);
+        this.config.apiToken = this.plugin.getConfig('apiToken', this.config.apiToken);
         this.config.updateInterval = this.plugin.getConfig('updateInterval', this.config.updateInterval);
         this.config.enableLog = this.plugin.getConfig('enableLog', this.config.enableLog);
     },
@@ -72,6 +74,7 @@ const MusicDataExporter = {
     saveConfig() {
         if (!this.plugin) return;
         this.plugin.setConfig('apiEndpoint', this.config.apiEndpoint);
+        this.plugin.setConfig('apiToken', this.config.apiToken);
         this.plugin.setConfig('updateInterval', this.config.updateInterval);
         this.plugin.setConfig('enableLog', this.config.enableLog);
     },
@@ -79,6 +82,7 @@ const MusicDataExporter = {
     start() {
         this.log('插件启动...');
         this.log('API地址:', this.config.apiEndpoint);
+        this.log('API令牌:', this.config.apiToken ? '已设置' : '未设置');
         
         this.setupAudioListener();
         this.setupMediaSessionListener();
@@ -526,7 +530,8 @@ const MusicDataExporter = {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json'
+                    'Accept': 'application/json',
+                    'X-API-Token': this.config.apiToken
                 },
                 body: JSON.stringify(data)
             });
@@ -553,12 +558,14 @@ plugin.onLoad((selfPlugin) => {
 
 function ConfigPanel() {
     const [apiEndpoint, setApiEndpoint] = React.useState(MusicDataExporter.config.apiEndpoint);
+    const [apiToken, setApiToken] = React.useState(MusicDataExporter.config.apiToken);
     const [updateInterval, setUpdateInterval] = React.useState(MusicDataExporter.config.updateInterval);
     const [enableLog, setEnableLog] = React.useState(MusicDataExporter.config.enableLog);
     const [status, setStatus] = React.useState('');
 
     const handleSave = () => {
         MusicDataExporter.config.apiEndpoint = apiEndpoint;
+        MusicDataExporter.config.apiToken = apiToken;
         MusicDataExporter.config.updateInterval = updateInterval;
         MusicDataExporter.config.enableLog = enableLog;
         MusicDataExporter.saveConfig();
@@ -600,6 +607,17 @@ function ConfigPanel() {
                     onChange={(e) => setApiEndpoint(e.target.value)}
                     style={{ width: '100%', padding: '8px 12px', marginBottom: '15px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: '#fff', boxSizing: 'border-box' }}
                     placeholder="http://your-domain.com/music.php"
+                />
+            </div>
+            
+            <div style={{ marginBottom: '15px' }}>
+                <label style={{ display: 'block', marginBottom: '5px', color: '#aaa', fontSize: '13px' }}>API 令牌</label>
+                <input 
+                    type="text" 
+                    value={apiToken}
+                    onChange={(e) => setApiToken(e.target.value)}
+                    style={{ width: '100%', padding: '8px 12px', marginBottom: '15px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: '#fff', boxSizing: 'border-box' }}
+                    placeholder="your-secret-token"
                 />
             </div>
             

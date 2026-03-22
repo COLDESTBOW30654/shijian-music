@@ -11,6 +11,7 @@ define('START_TIME', microtime(true));
 define('DATA_FILE', __DIR__ . '/current_data.json');
 define('RATE_LIMIT_DIR', __DIR__ . '/cache');
 define('LOG_FILE', __DIR__ . '/debug.log');
+define('API_TOKEN', 'your-secret-token'); // 替换为你的实际令牌
 
 final class MusicApi
 {
@@ -35,10 +36,27 @@ final class MusicApi
 
     private function setCorsHeaders(): void
     {
-        $origin = $_SERVER['HTTP_ORIGIN'] ?? '*';
-        header('Access-Control-Allow-Origin: ' . ($origin ?: '*'));
+        $origin = $_SERVER['HTTP_ORIGIN'] ?? null;
+        
+        if ($origin) {
+            $origin = filter_var($origin, FILTER_SANITIZE_URL);
+            $parsedOrigin = parse_url($origin);
+            $scheme = $parsedOrigin['scheme'] ?? '';
+            
+            if (in_array($scheme, ['http', 'https'], true)) {
+                header('Access-Control-Allow-Origin: ' . $origin);
+            } else {
+                header('Access-Control-Allow-Origin: *');
+            }
+        } else {
+            $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+            $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+            header('Access-Control-Allow-Origin: ' . $scheme . '://' . $host);
+        }
+        
         header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-        header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Accept');
+        header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Accept, X-API-Token');
+        header('Access-Control-Allow-Credentials: true');
         header('Access-Control-Max-Age: 86400');
 
         if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -102,6 +120,15 @@ final class MusicApi
         }
     }
 
+    private function validateToken(): void
+    {
+        $token = $_SERVER['HTTP_X_API_TOKEN'] ?? $_GET['token'] ?? null;
+        
+        if (!$token || $token !== API_TOKEN) {
+            $this->sendError(401, '无效的API令牌');
+        }
+    }
+
     public function handleRequest(): void
     {
         try {
@@ -112,6 +139,7 @@ final class MusicApi
             $action = $this->sanitizeInput($_GET['action'] ?? 'current');
 
             if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'update') {
+                $this->validateToken();
                 $this->handleUpdate();
                 return;
             }
